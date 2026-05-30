@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Safe Runner: Cool Python Apps → Dockerfile or Container Command</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a33;
+      --panel-2: #0e1630;
+      --text: #e8eefc;
+      --muted: #9fb2e1;
+      --accent: #7cc4ff;
+      --green: #6af79f;
+      --yellow: #ffe082;
+      --red: #ff8a80;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    html, body { height: 100%; }
+    body { margin: 0; font-family: var(--sans); color: var(--text); background: radial-gradient(1200px 800px at 10% -10%, #1a2b6b33, transparent 60%), var(--bg); }
+    .app { max-width: 1200px; margin: 24px auto; padding: 16px; }
+    header { display:flex; align-items:center; gap:16px; margin-bottom: 16px; }
+    header h1 { font-size: 20px; margin: 0; letter-spacing: 0.2px; }
+    header .badge { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #1c2646; color: var(--muted); }
+/*     .grid { display: grid; grid-template-columns: 360px 1fr; gap: 16px; }
+    /* Replace this: grid-template-columns: 360px 1fr; */ */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  gap: 16px;
+}
+
+/* Ensure grid items can actually shrink */
+.grid > * { min-width: 0; }
+
+    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: linear-gradient(180deg, #111a36, #0b1330); border: 1px solid #1f2c5b; box-shadow: 0 0 0 1px #0d1535 inset, 0 10px 30px #00000040; border-radius: 16px; }
+    .panel { padding: 16px; }
+    /* Make the left column auto-height so the Safety notes are always visible */
+    .list { padding-right: 6px; }
+    /* Only the package list scrolls */
+    #pkg-list { max-height: 42vh; overflow: auto; }
+
+    .pkg { display:flex; flex-direction: column; gap:6px; padding: 12px; border-radius: 12px; border: 1px solid transparent; cursor: pointer; }
+    .pkg:hover { background: #0f1a3a; border-color: #243367; }
+    .pkg.active { background: #0f1d48; border-color: #2e4494; }
+    .pkg .name { font-weight: 600; }
+    .pkg .desc { color: var(--muted); font-size: 13px; line-height: 1.2; }
+
+    .section { padding: 14px 16px; border-top: 1px solid #1f2c5b; }
+    .section h3 { margin: 0 0 8px 0; font-size: 14px; color: var(--muted); font-weight: 600; letter-spacing: .4px; text-transform: uppercase; }
+
+    .controls { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    @media (max-width: 900px) { .controls { grid-template-columns: 1fr; } }
+    .field { display:flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 13px; color: var(--muted); }
+    .field input[type="text"], .field input[type="number"], .field textarea, .field select { background: #0a1230; color: var(--text); border: 1px solid #263469; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: var(--sans); outline: none; }
+    .field textarea { min-height: 120px; }
+
+    .checkbox { display:flex; align-items:center; gap: 8px; }
+    .checkbox input { width: 18px; height: 18px; accent-color: #4ca3ff; }
+
+    .code { position: relative; background: #07102b; border: 1px solid #213269; border-radius: 12px; padding: 12px; }
+    .code pre { margin: 0; font-family: var(--mono); font-size: 13px; line-height: 1.5; color: #d9e5ff; overflow:auto; }
+    .code .toolbar { position: absolute; top: 8px; right: 8px; display:flex; gap: 8px; }
+    .btn { border: 1px solid #274189; background: #112356; color: #e2ecff; padding: 8px 12px; font-size: 13px; border-radius: 10px; cursor: pointer; }
+    .btn:hover { filter: brightness(1.1); }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary { border-color: #2a66ff; background: linear-gradient(180deg, #2954dd, #1b3fa7); }
+    .btn.ghost { background: #0f1f4d; border-color: #2a3d7a; }
+
+    .tips { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 900px) { .tips { grid-template-columns: 1fr; } }
+    .tip { background: #0b1538; border: 1px dashed #274189; border-radius: 12px; padding: 12px; color: #cfe0ff; font-size: 13px; }
+    .tip strong { color: var(--yellow); }
+
+    .pill { display:inline-block; padding: 2px 8px; border-radius:999px; border:1px solid #2b3c7a; background:#0c1840; color:#bcd1ff; font-size:12px; }
+    .muted { color: var(--muted); }
+    .warn { color: var(--yellow); }
+    .danger { color: var(--red); }
+    .success { color: var(--green); }
+    footer { margin-top: 18px; color: var(--muted); font-size:12px; text-align:center; }
+    .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Safe Runner • Cool <span style="color:var(--accent)">Python</span> Apps</h1>
+      <span class="badge">Static generator → Dockerfile / run</span>
+    </header>
+
+    <div class="grid">
+      <!-- Left: package list & about -->
+      <div class="card list" style="max-height:none; overflow:visible;">
+        <div class="panel">
+          <div class="field">
+            <label>Quick filter</label>
+            <input type="text" id="filter" placeholder="Search packages..." />
+          </div>
+        </div>
+        <div id="pkg-list" class="panel"></div>
+        <div class="section">
+          <h3>Safety notes (TL;DR)</h3>
+          <div class="tips">
+            <div class="tip">This tool <strong>never mounts your project</strong> or your <code>.env</code> by default, so the app in the container can’t read them.</div>
+            <div class="tip">Run as a <strong>non‑root UID</strong> with <code>--cap-drop=ALL</code>, <code>--no-new-privileges</code>, optional <code>--read-only</code> FS, and <code>tmpfs</code> for scratch.</div>
+            <div class="tip">Prefer the <strong>Dockerfile</strong> option for extra safety: install at build time; then run with <code>--network none</code> if the app is offline‑capable.</div>
+            <div class="tip">Always <strong>pin versions</strong> (e.g. <code>coolpkg==1.2.3</code>) to reduce supply‑chain surprises.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: generator -->
+      <div class="card">
+        <div class="panel">
+          <div class="row" style="justify-content:space-between;">
+            <div>
+              <div id="selected-name" style="font-size:18px;font-weight:700;">–</div>
+              <div id="selected-desc" class="muted" style="margin-top:4px;"></div>
+              <div id="selected-meta" class="row" style="margin-top:8px;"></div>
+            </div>
+            <div class="row">
+              <button class="btn ghost" id="customizeBtn">+ Custom package</button>
+              <button class="btn" id="resetBtn" title="Reset all fields to defaults">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Generator</h3>
+          <div class="controls">
+            <div class="field">
+              <label>Mode</label>
+              <select id="mode">
+                <option value="dockerfile">Dockerfile (build once, run safely)</option>
+                <option value="run">Container run (installs each run)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Engine</label>
+              <select id="engine">
+                <option value="docker">docker</option>
+                <option value="podman">podman</option>
+                <option value="nerdctl">nerdctl</option>
+                <option value="finch">finch</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Interaction</label>
+              <select id="interaction">
+                <option value="immediate">Immediate run (exec CLI)</option>
+                <option value="interactive">Interactive shell (CLI installed)</option>
+                <option value="pipe">Pipe stdin → CLI</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Package spec (<span class="muted">e.g. <code>httpie==3.2.2</code> or <code>yt-dlp[websockets]</code></span>)</label>
+              <input id="pkgSpec" type="text" placeholder="package[extras]==x.y.z" />
+            </div>
+            <div class="field">
+              <label>Paste a <code>pip install ...</code> command (auto‑parses)</label>
+              <input id="pipCmd" type="text" placeholder="pip install dedlin==1.19.4 --upgrade" />
+            </div>
+            <div class="field">
+              <label>Entrypoint / CLI to run</label>
+              <input id="entrypoint" type="text" placeholder="usually same as the package (e.g. http, yt-dlp, glances)" />
+            </div>
+            <div class="field">
+              <label>CLI args (optional)</label>
+              <input id="cliArgs" type="text" placeholder="--help or other flags" />
+            </div>
+            <div class="field">
+              <label>System packages (apt) – space separated (optional)</label>
+              <input id="aptPkgs" type="text" placeholder="e.g. ffmpeg" />
+            </div>
+            <div class="field">
+              <label>Mount output dir (optional)</label>
+              <input id="mountDir" type="text" placeholder="/absolute/host/path:/container/path:rw" />
+            </div>
+            <div class="field">
+              <label>Memory limit (MB)</label>
+              <input id="memMb" type="number" min="64" step="64" value="1024" />
+            </div>
+            <div class="field">
+              <label>CPU limit (cores)</label>
+              <input id="cpus" type="number" min="1" step="0.1" value="1.0" />
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:10px; margin-top:10px;">
+            <label class="checkbox"><input id="readOnly" type="checkbox" checked /> Read‑only filesystem</label>
+            <label class="checkbox"><input id="noNewPrivs" type="checkbox" checked /> no‑new‑privileges</label>
+            <label class="checkbox"><input id="capDropAll" type="checkbox" checked /> drop all capabilities</label>
+            <label class="checkbox"><input id="tmpfsTmp" type="checkbox" checked /> tmpfs /tmp & /var/tmp</label>
+            <label class="checkbox"><input id="blockNet" type="checkbox" /> block network at runtime</label>
+            <label class="checkbox"><input id="nonRoot" type="checkbox" checked /> run as non‑root UID</label>
+            <label class="checkbox"><input id="limitPids" type="checkbox" checked /> limit PIDs (256)</label>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Output</h3>
+          <div id="warn" class="muted" style="margin-bottom:8px;"></div>
+          <div class="code">
+            <div class="toolbar">
+              <button class="btn" id="downloadBtn" title="Download as file">Download</button>
+              <button class="btn primary" id="copyBtn" title="Copy to clipboard">Copy</button>
+            </div>
+            <pre><code id="output"></code></pre>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Why this is safer</h3>
+          <ul class="muted" style="margin-top:6px; line-height:1.7;">
+            <li>No host mounts, no <code>.env</code> exposure by default.</li>
+            <li>Numeric non‑root user (no root privileges inside the container).</li>
+            <li><code>--cap-drop=ALL</code>, <code>--no-new-privileges</code>, optional <code>--read-only</code> filesystem.</li>
+            <li><code>tmpfs</code> scratch space (<code>/tmp</code>, <code>/var/tmp</code>) prevents writes to the image layer.</li>
+            <li>Optional <code>--network none</code> after building a Dockerfile image if your app is offline‑capable.</li>
+            <li>Resource limits (<code>--memory</code>, <code>--cpus</code>, <code>--pids-limit</code>) to reduce blast radius.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <!-- intentionally blank per user request -->
+    </footer>
+  </div>
+
+  <script>
+  // --- Data: a tiny, purely static catalog of neat Python CLIs ---
+  const CATALOG = [
+    { name: "httpie", entrypoint: "http", description: "Human‑friendly HTTP client for APIs & debugging.", apt: "", exampleArgs: "--help" },
+    { name: "glances", entrypoint: "glances", description: "Curses‑based system monitor (inside the container).", apt: "", exampleArgs: "--help" },
+    { name: "yt-dlp", entrypoint: "yt-dlp", description: "Feature‑rich video downloader. (Tip: add system pkg ffmpeg)", apt: "ffmpeg", exampleArgs: "--version" },
+    { name: "howdoi", entrypoint: "howdoi", description: "Instant answers from StackOverflow from your terminal.", apt: "", exampleArgs: "format a date in python" },
+    { name: "rich-cli", entrypoint: "rich", description: "Rich text & markdown rendering in the terminal.", apt: "", exampleArgs: "--help" },
+    { name: "cookiecutter", entrypoint: "cookiecutter", description: "Project templating toolkit.", apt: "", exampleArgs: "--help" },
+    { name: "speedtest-cli", entrypoint: "speedtest", description: "Internet bandwidth test CLI.", apt: "", exampleArgs: "--simple" },
+    { name: "visidata", entrypoint: "vd", description: "Interactive terminal spreadsheet for data exploration.", apt: "", exampleArgs: "--help" },
+    { name: "mkdocs", entrypoint: "mkdocs", description: "Static site generator for project docs.", apt: "", exampleArgs: "--help" }
+  ];
+
+  // --- State ---
+  let state = {
+    selected: CATALOG[0],
+    mode: 'dockerfile',
+    engine: 'docker',
+    interaction: 'immediate',
+    pkgSpec: CATALOG[0].name,
+    entrypoint: CATALOG[0].entrypoint,
+    cliArgs: CATALOG[0].exampleArgs,
+    aptPkgs: CATALOG[0].apt,
+    mountDir: '',
+    memMb: 1024,
+    cpus: 1.0,
+    readOnly: true,
+    noNewPrivs: true,
+    capDropAll: true,
+    tmpfsTmp: true,
+    blockNet: false,
+    nonRoot: true,
+    limitPids: true,
+  };
+
+  // --- Helpers ---
+  const $ = (id) => document.getElementById(id);
+  function baseProjectFromSpec(spec) {
+    if (!spec) return '';
+    let s = (spec + '').trim();
+    // take first token (before any whitespace)
+    if (s.indexOf(' ') !== -1) s = s.split(' ')[0];
+    // strip extras in [..]
+    if (s.indexOf('[') !== -1) s = s.split('[')[0];
+    // strip version/comparators
+    const cuts = ['<','>','=','!','~','@'];
+    for (const c of cuts) { const i = s.indexOf(c); if (i > 0) { s = s.slice(0, i); break; } }
+    return s.trim();
+  }
+  function pypiUrl(spec) {
+    const name = baseProjectFromSpec(spec);
+    if (!name) return null;
+    return 'https://pypi.org/project/' + encodeURIComponent(name) + '/';
+  }
+  function escapeShellArg(s) {
+    if (s == null) return '';
+    return (s + '').replace(/'/g, "'\''");
+  }
+  function parsePipInstall(cmd) {
+    if (!cmd) return '';
+    const txt = (cmd + '').trim();
+    const ix = txt.toLowerCase().indexOf('pip install ');
+    if (ix === -1) return '';
+    const tail = txt.slice(ix + 'pip install '.length).trim();
+    const parts = tail.split(' ').filter(Boolean).filter(t => t[0] !== '-');
+    return parts[0] || '';
+  }
+
+  function renderPkgList() {
+    const filter = $('filter').value.trim().toLowerCase();
+    const container = $('pkg-list');
+    container.innerHTML = '';
+    CATALOG.filter(p => !filter || p.name.toLowerCase().includes(filter) || p.description.toLowerCase().includes(filter))
+      .forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'pkg' + (state.selected && state.selected.name === p.name ? ' active' : '');
+        div.innerHTML = `<div class="name">${p.name}</div><div class="desc">${p.description}</div>`;
+        div.onclick = () => {
+          state.selected = p;
+          state.pkgSpec = p.name;
+          state.entrypoint = p.entrypoint;
+          state.cliArgs = p.exampleArgs || '';
+          state.aptPkgs = p.apt || '';
+          updateFromState();
+        };
+        container.appendChild(div);
+      });
+  }
+
+  function setSelectedMeta() {
+    const name = state.pkgSpec || (state.selected ? state.selected.name : '–');
+    $('selected-name').textContent = name;
+    $('selected-desc').textContent = state.selected ? state.selected.description : '';
+    const meta = $('selected-meta');
+    meta.innerHTML = '';
+    const pill1 = document.createElement('span'); pill1.className = 'pill'; pill1.textContent = state.mode === 'dockerfile' ? 'Dockerfile' : state.engine + ' run';
+    const pill2 = document.createElement('span'); pill2.className = 'pill'; pill2.textContent = state.nonRoot ? 'non‑root' : 'user: root';
+    const pill3 = document.createElement('span'); pill3.className = 'pill'; pill3.textContent = state.interaction;
+    meta.appendChild(pill1); meta.appendChild(pill2); meta.appendChild(pill3);
+    const url = pypiUrl(state.pkgSpec);
+    if (url) {
+      const link = document.createElement('a');
+      link.className = 'pill';
+      link.href = url; link.target = '_blank'; link.rel = 'noopener';
+      link.textContent = 'PyPI ↗';
+      meta.appendChild(link);
+    }
+  }
+
+  function genDockerfile() {
+    const pkgSpec = state.pkgSpec || (state.selected?.name || 'example');
+    const entry = state.entrypoint || baseProjectFromSpec(pkgSpec) || 'python';
+    const aptUser = (state.aptPkgs || '').trim();
+
+    // If interactive shell requested, ensure bash exists in image
+    const aptNeeded = state.interaction === 'interactive' ? (aptUser ? aptUser + ' bash' : 'bash') : aptUser;
+    const aptStep = aptNeeded ? `
+# Optional system packages
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ${aptNeeded} \
+ && rm -rf /var/lib/apt/lists/*` : '';
+
+    const userStep = state.nonRoot ? `
+# Create and switch to an unprivileged user
+RUN useradd -u 10001 -m appuser
+USER appuser
+WORKDIR /home/appuser` : `
+WORKDIR /root`;
+
+    let df = `# syntax=docker/dockerfile:1
+# Minimal image that installs a single Python app and runs it as non-root.
+FROM python:3.13-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install OS deps first (if any)${aptStep}
+# Install the Python app
+RUN pip install --no-cache-dir \"${pkgSpec}\"
+${userStep}
+
+`;
+
+    if (state.interaction === 'interactive') {
+      df += `# Interactive shell with the CLI available on PATH
+ENTRYPOINT [\"bash\"]
+CMD [\"-l\"]
+`;
+    } else {
+      df += `# Default command — change or override at run time
+ENTRYPOINT [\"${entry}\"]
+CMD [\"--help\"]
+`;
+    }
+
+    // Runtime hardening examples
+    const engine = state.engine;
+    const baseRun = `${engine} run --rm${state.interaction === 'interactive' ? ' -it' : ''}`;
+    const pipePrefix = state.interaction === 'pipe' ? `echo \"YOUR_INPUT\" | ` : '';
+    const imgHint = `<your-built-image>`;
+
+    df += `
+# Suggested runtime hardening (example):
+# ${pipePrefix}${baseRun} \
+#   ${state.readOnly ? '--read-only \
+#   ' : ''}${state.limitPids ? '--pids-limit=256 \
+#   ' : ''}--memory=${state.memMb}m \
+#   --cpus=${state.cpus} \
+#   ${state.noNewPrivs ? '--security-opt=no-new-privileges \
+#   ' : ''}${state.capDropAll ? '--cap-drop=ALL \
+#   ' : ''}${state.nonRoot ? '--user 65532:65532 \
+#   ' : ''}${state.tmpfsTmp ? '--tmpfs /tmp:rw,nosuid,nodev,noexec,size=64m \
+#   --tmpfs /var/tmp:rw,nosuid,nodev,noexec,size=64m \
+#   ' : ''}${state.blockNet ? '--network none \
+#   ' : ''}${state.mountDir ? `-v ${state.mountDir} \
+#   ` : ''}${imgHint}${state.interaction === 'interactive' ? '' : ` ${entry} ${state.cliArgs || '--help'}`}
+`;
+
+    return df;
+  }
+
+  function genRunCommand() {
+    const engine = state.engine;
+    const pkgSpec = state.pkgSpec || (state.selected?.name || 'example');
+    const entry = state.entrypoint || baseProjectFromSpec(pkgSpec) || 'python';
+    const args = state.cliArgs || '';
+    const aptUser = (state.aptPkgs || '').trim();
+
+    const parts = [engine, 'run', '--rm'];
+
+    if (state.interaction === 'interactive') parts.push('-it');
+    if (state.readOnly) parts.push('--read-only');
+    if (state.limitPids) { parts.push('--pids-limit', '256'); }
+    parts.push('--memory', `${state.memMb}m`, '--cpus', `${state.cpus}`);
+    if (state.noNewPrivs) parts.push('--security-opt', 'no-new-privileges');
+    if (state.capDropAll) parts.push('--cap-drop', 'ALL');
+    if (state.nonRoot) parts.push('--user', '65532:65532');
+    if (state.tmpfsTmp) {
+      parts.push('--tmpfs', '/tmp:rw,nosuid,nodev,noexec,size=64m');
+      parts.push('--tmpfs', '/var/tmp:rw,nosuid,nodev,noexec,size=64m');
+    }
+    if (state.mountDir) parts.push('-v', state.mountDir);
+
+    // For install-on-the-fly we need network to reach PyPI
+    const needsNetwork = true;
+    if (state.blockNet && needsNetwork) {
+      parts.push('--network', 'none');
+    }
+
+    // Base image
+    parts.push('python:3.13-slim');
+
+    // Build the shell command; ensure bash for interactive if requested
+    const cmdLines = [];
+    const aptNeeded = state.interaction === 'interactive' ? (aptUser ? aptUser + ' bash' : 'bash') : aptUser;
+    if (aptNeeded) {
+      cmdLines.push('apt-get update');
+      cmdLines.push('DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ' + aptNeeded);
+      cmdLines.push('rm -rf /var/lib/apt/lists/*');
+    }
+    cmdLines.push('pip install --no-cache-dir "' + pkgSpec.replace(/"/g,'\"') + '"');
+
+    if (state.interaction === 'interactive') {
+      cmdLines.push('exec bash -l');
+    } else {
+      cmdLines.push('exec ' + entry + (args ? ' ' + args : ''));
+    }
+    const sh = cmdLines.join(' && ');
+
+    let final = parts.join(' ');
+
+    if (state.interaction === 'pipe') {
+      final = 'echo "YOUR_INPUT" | ' + final + ' sh -lc ' + '\'' + escapeShellArg(sh) + '\'';
+    } else {
+      final += ' sh -lc ' + '\'' + escapeShellArg(sh) + '\'';
+    }
+
+    return final;
+  }
+
+  function updateOutput() {
+    const out = $('output');
+    const warn = $('warn');
+    if (state.mode === 'dockerfile') {
+      out.textContent = genDockerfile();
+      if (state.blockNet) {
+        warn.innerHTML = '<span class="success">✔</span> With Dockerfile mode, you can safely run with <code>--network none</code> after the image is built (if the app doesn’t need the internet).';
+      } else {
+        warn.textContent = '';
+      }
+    } else {
+      out.textContent = genRunCommand();
+      if (state.blockNet) {
+        warn.innerHTML = '<span class="warn">⚠</span> Blocking network here will prevent <code>pip install</code> from fetching the package. Either uncheck “block network” or build a Dockerfile image first.';
+      } else {
+        warn.textContent = '';
+      }
+    }
+  }
+
+  function updateFromState() {
+    // Inputs → reflect state
+    $('mode').value = state.mode;
+    $('engine').value = state.engine;
+    $('interaction').value = state.interaction;
+    $('pkgSpec').value = state.pkgSpec;
+    $('entrypoint').value = state.entrypoint;
+    $('cliArgs').value = state.cliArgs;
+    $('aptPkgs').value = state.aptPkgs;
+    $('mountDir').value = state.mountDir;
+    $('memMb').value = state.memMb;
+    $('cpus').value = state.cpus;
+    $('readOnly').checked = state.readOnly;
+    $('noNewPrivs').checked = state.noNewPrivs;
+    $('capDropAll').checked = state.capDropAll;
+    $('tmpfsTmp').checked = state.tmpfsTmp;
+    $('blockNet').checked = state.blockNet;
+    $('nonRoot').checked = state.nonRoot;
+    $('limitPids').checked = state.limitPids;
+
+    setSelectedMeta();
+    renderPkgList();
+    updateOutput();
+  }
+
+  // --- Wire up inputs ---
+  function wire() {
+    $('filter').addEventListener('input', renderPkgList);
+
+    $('mode').onchange = e => { state.mode = e.target.value; updateOutput(); setSelectedMeta(); };
+    $('engine').onchange = e => { state.engine = e.target.value; updateOutput(); setSelectedMeta(); };
+    $('interaction').onchange = e => { state.interaction = e.target.value; updateOutput(); setSelectedMeta(); };
+    $('pkgSpec').oninput = e => { state.pkgSpec = e.target.value; setSelectedMeta(); updateOutput(); };
+    $('pipCmd').oninput = e => {
+      const spec = parsePipInstall(e.target.value);
+      if (spec) {
+        state.pkgSpec = spec;
+        const guessed = baseProjectFromSpec(spec);
+        if (!$('entrypoint').value || $('entrypoint').value === state.entrypoint) {
+          state.entrypoint = guessed;
+        }
+        updateFromState();
+      }
+    };
+    $('entrypoint').oninput = e => { state.entrypoint = e.target.value; updateOutput(); };
+    $('cliArgs').oninput = e => { state.cliArgs = e.target.value; updateOutput(); };
+    $('aptPkgs').oninput = e => { state.aptPkgs = e.target.value; updateOutput(); };
+    $('mountDir').oninput = e => { state.mountDir = e.target.value; updateOutput(); };
+    $('memMb').oninput = e => { state.memMb = parseInt(e.target.value || '1024', 10); updateOutput(); };
+    $('cpus').oninput = e => { state.cpus = parseFloat(e.target.value || '1.0'); updateOutput(); };
+
+    ['readOnly','noNewPrivs','capDropAll','tmpfsTmp','blockNet','nonRoot','limitPids']
+      .forEach(id => $(id).onchange = () => { state[id] = $(id).checked; updateOutput(); });
+
+    $('copyBtn').onclick = async () => {
+      const text = $('output').textContent;
+      try { await navigator.clipboard.writeText(text); $('copyBtn').textContent = 'Copied!'; setTimeout(()=> $('copyBtn').textContent = 'Copy', 1200); } catch(e) {}
+    };
+
+    $('downloadBtn').onclick = () => {
+      const blob = new Blob([$('output').textContent], { type: 'text/plain' });
+      const a = document.createElement('a');
+      const mode = state.mode === 'dockerfile' ? 'Dockerfile' : 'run.sh';
+      a.download = mode;
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    };
+
+    $('resetBtn').onclick = () => {
+      const sel = state.selected || CATALOG[0];
+      state = {
+        selected: sel,
+        mode: 'dockerfile',
+        engine: 'docker',
+        interaction: 'immediate',
+        pkgSpec: sel.name,
+        entrypoint: sel.entrypoint,
+        cliArgs: sel.exampleArgs || '',
+        aptPkgs: sel.apt || '',
+        mountDir: '',
+        memMb: 1024,
+        cpus: 1.0,
+        readOnly: true,
+        noNewPrivs: true,
+        capDropAll: true,
+        tmpfsTmp: true,
+        blockNet: false,
+        nonRoot: true,
+        limitPids: true,
+      };
+      updateFromState();
+    };
+
+    $('customizeBtn').onclick = () => {
+      state.selected = { name: '(custom)', entrypoint: '', description: 'Your own package spec and entrypoint', apt: '', exampleArgs: '' };
+      state.pkgSpec = '';
+      state.entrypoint = '';
+      state.cliArgs = '';
+      state.aptPkgs = '';
+      updateFromState();
+    };
+  }
+
+  // --- Init ---
+  wire();
+  renderPkgList();
+  updateFromState();
+  </script>
+</body>
+</html>
