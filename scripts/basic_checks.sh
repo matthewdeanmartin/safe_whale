@@ -18,11 +18,11 @@ else
     CLI_PYTHON=(python)
 fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TMP_ROOT="${safe_whale_SMOKE_TMP:-${ROOT_DIR}/.tmp/safe-whale-smoke-$$}"
+TMP_ROOT="${SAFE_WHALE_SMOKE_TMP:-${ROOT_DIR}/.tmp/safe-whale-smoke-$$}"
 
 export XDG_DATA_HOME="${TMP_ROOT}/xdg-data"
 export LOCALAPPDATA="${TMP_ROOT}/localappdata"
-export safe_whale_DATA_DIR="${TMP_ROOT}/data"
+export SAFE_WHALE_DATA_DIR="${TMP_ROOT}/data"
 export SAFE_WHALE_BIN_DIR="${TMP_ROOT}/bin"
 mkdir -p "$XDG_DATA_HOME" "$LOCALAPPDATA" "$SAFE_WHALE_DATA_DIR" "$$SAFE_WHALE_BIN_DIR"
 
