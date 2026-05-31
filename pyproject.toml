@@ -1,5 +1,5 @@
 [project]
-name = "safe-whale-docker"
+name = "safe-whale"
 version = "0.1.0"
 description = "Run Python CLI tools safely in Docker containers — as easy as pipx"
 readme = "README.md"
