@@ -61,6 +61,7 @@ dev = [
     "pre-commit>=4.0.0",
     "tox>=4.0",
     "tox-uv>=1.0",
+    "keepachangelog-manager-fork>=6.1.1,<7",
 ]
 
 [tool.uv]
@@ -109,6 +110,24 @@ ignore = ["E501"]
 [tool.bandit]
 exclude_dirs = ["tests"]
 skips = ["B101", "B108", "B310", "B404", "B603", "B607"]
+
+# changelogmanager (keepachangelog-manager-fork) drives the release workflows.
+# See .github/workflows/create_draft_release.yml and release.yml.
+[tool.changelogmanager.versioning]
+scheme = "semver"
+
+[tool.changelogmanager.validation]
+enforce_preamble = true
+format = "auto"
+
+[tool.changelogmanager.defaults]
+error_format = "github"
+commit_schema = "keepachangelog"
+schema_version = "current"
+
+[[tool.changelogmanager.components]]
+name = "default"
+changelog = "CHANGELOG.md"
 
 [tool.coverage.report]
 exclude_also = [
