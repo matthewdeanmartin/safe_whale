@@ -61,7 +61,8 @@ dev = [
     "pre-commit>=4.0.0",
     "tox>=4.0",
     "tox-uv>=1.0",
-    "keepachangelog-manager-fork[all]>=6.6.0",
+    "keepachangelog-manager-fork[fast]>=6.8.0; python_version < '3.15'",
+    "keepachangelog-manager-fork[stdlib]>=6.8.0; python_version >= '3.15'",
 ]
 
 [tool.uv]
