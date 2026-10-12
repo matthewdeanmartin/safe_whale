@@ -76,7 +76,6 @@ def test_find_wt_real_system() -> None:
     localappdata = os.environ.get("LOCALAPPDATA", "")
     appx_alias = Path(localappdata) / "Microsoft" / "WindowsApps" / "wt.exe"
     if appx_alias.exists():
-        assert result is not None, (
-            f"wt.exe exists at {appx_alias} but _find_wt() returned None — "
-            "shutil.which and AppX fallback both failed"
-        )
+        assert (
+            result is not None
+        ), f"wt.exe exists at {appx_alias} but _find_wt() returned None — shutil.which and AppX fallback both failed"

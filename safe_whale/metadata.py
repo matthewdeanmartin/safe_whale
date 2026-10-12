@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
-from datetime import datetime, timezone
 import json
-from pathlib import Path
 import re
+from dataclasses import replace
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -91,7 +91,7 @@ def _load_cached_payload(name: str) -> dict[str, Any] | None:
 
 def _save_cached_payload(name: str, payload: dict[str, Any]) -> None:
     data = {
-        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "fetched_at": datetime.now(UTC).isoformat(),
         "payload": payload,
     }
     _cache_path(name).write_text(json.dumps(data, indent=2), encoding="utf-8")
@@ -106,8 +106,8 @@ def _cache_is_fresh(data: dict[str, Any], ttl_seconds: int) -> bool:
     except ValueError:
         return False
     if timestamp.tzinfo is None:
-        timestamp = timestamp.replace(tzinfo=timezone.utc)
-    age = datetime.now(timezone.utc) - timestamp
+        timestamp = timestamp.replace(tzinfo=UTC)
+    age = datetime.now(UTC) - timestamp
     return age.total_seconds() <= ttl_seconds
 
 

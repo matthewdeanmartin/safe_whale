@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
+
 from safe_whale.launchers import (
     directory_on_path,
     generate_powershell_wrapper,
@@ -20,7 +21,6 @@ from safe_whale.launchers import (
 )
 from safe_whale.models import Profile, RunConfig
 from safe_whale.storage import config_digest
-
 
 
 @pytest.fixture(autouse=True)

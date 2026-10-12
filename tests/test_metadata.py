@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
 import json
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -87,7 +87,7 @@ def test_enrich_uses_stale_cache_when_fetch_fails(monkeypatch: pytest.MonkeyPatc
     cache_file.write_text(
         json.dumps(
             {
-                "fetched_at": (datetime.now(timezone.utc) - timedelta(days=5)).isoformat(),
+                "fetched_at": (datetime.now(UTC) - timedelta(days=5)).isoformat(),
                 "payload": _payload("2.0.0"),
             }
         ),

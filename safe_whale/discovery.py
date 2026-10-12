@@ -13,13 +13,13 @@ an empty list so callers fall back to the single declared entrypoint.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import json
 import logging
-from pathlib import Path
 import subprocess
 import textwrap
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from safe_whale.container import base_project, build_run_argv, image_tag
@@ -226,7 +226,7 @@ def load_cached_entrypoints(tag: str) -> list[DiscoveredCommand] | None:
 def save_cached_entrypoints(tag: str, commands: list[DiscoveredCommand]) -> None:
     """Persist discovered commands for an image tag."""
     payload = {
-        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "fetched_at": datetime.now(UTC).isoformat(),
         "commands": [{"name": command.name, "group": command.group, "value": command.target} for command in commands],
     }
     _cache_path(tag).write_text(json.dumps(payload, indent=2), encoding="utf-8")
