@@ -158,3 +158,7 @@ Cleanup only targets assets safe-whale created or explicitly tracked.
 - [spec/codex.md](spec/codex.md): local Codex sandbox notes.
 
 Published documentation is configured through [mkdocs.yml](mkdocs.yml) and [.readthedocs.yaml](.readthedocs.yaml).
+
+## Python 3.15 wheels-only verification — 2026-10-04
+
+Windows Python 3.15.0rc3 passes 119 core tests with stable wheel dependencies and with prereleases allowed; Python 3.14 matches. Docker integration remains excluded by the existing test configuration. Normal project environments were preserved; broad developer tooling still encounters missing PyYAML wheels. No new runtime fallback was added in this verification.
